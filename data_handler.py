@@ -5,7 +5,7 @@ Manages file labeling and dataset preparation
 
 import os
 import pandas as pd
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from hash_features import extract_hash_features
 
 
@@ -22,7 +22,7 @@ def create_sample_files(sample_dir: str = "sample_files"):
     os.makedirs(benign_dir, exist_ok=True)
     os.makedirs(malicious_dir, exist_ok=True)
     
-    # Create sample benign files (text, documents)
+    # Create sample benign files (text, documents, scripts, pseudo-binaries)
     benign_samples = [
         ("document1.txt", b"This is a normal text document with regular content."),
         ("document2.txt", b"Another benign file with legitimate data and information."),
@@ -32,9 +32,13 @@ def create_sample_files(sample_dir: str = "sample_files"):
         ("log.txt", b"Application log file with timestamps and normal events."),
         ("notes.txt", b"Personal notes and reminders for daily tasks."),
         ("report.txt", b"Monthly report with statistics and analysis data."),
+        ("script.py", b"print('Utility script - benign')"),
+        ("image.png", b"\x89PNG\r\n\x1a\n" + b"BENIGNPNGDATA"),
+        ("archive.zip", b"PK\x03\x04" + b"BENIGNZIPCONTENT"),
+        ("document.pdf", b"%PDF-1.4 BENIGNPDFCONTENT %%EOF"),
     ]
     
-    # Create sample malicious files (simulated with suspicious patterns)
+    # Create sample malicious files (simulated with suspicious patterns / signatures)
     malicious_samples = [
         ("malware1.exe", b"\x4D\x5A" + b"\x90" * 100 + b"malicious payload here"),
         ("virus.dll", b"\x4D\x5A\x50\x45" + b"\xFF" * 150 + b"infected code"),
@@ -44,6 +48,10 @@ def create_sample_files(sample_dir: str = "sample_files"):
         ("ransomware.bin", b"\xFF\xFE" * 75 + b"file encryption routine"),
         ("rootkit.sys", b"\x4B\x45\x52\x4E" + b"\x00" * 130 + b"kernel manipulation"),
         ("spyware.exe", b"\x4D\x5A\x90\x00" + b"\xBB" * 110 + b"data exfiltration"),
+        ("obfuscated.py", b"import\x20sys\n#\x20MALICIOUS\n" + b"\x90"*60),
+        ("payload.png", b"\x89PNG\r\n\x1a\n" + b"\xFF"*80 + b"HIDDENPAYLOAD"),
+        ("encrypted.zip", b"PK\x03\x04" + b"\xEE"*90 + b"LOCKEDDATA"),
+        ("exploit.pdf", b"%PDF-1.7" + b"\x00"*50 + b"/JS (malicious)"),
     ]
     
     # Write benign files
@@ -102,7 +110,10 @@ def load_dataset(benign_dir: str, malicious_dir: str) -> Tuple[pd.DataFrame, Lis
     return df, labels
 
 
-def prepare_data(test_size: float = 0.3, random_state: int = 42):
+def prepare_data(test_size: float = 0.3, random_state: int = 42,
+                 benign_dir: Optional[str] = None,
+                 malicious_dir: Optional[str] = None,
+                 generate_if_missing: bool = True):
     """
     Prepare complete dataset with train/test split
     
@@ -115,8 +126,13 @@ def prepare_data(test_size: float = 0.3, random_state: int = 42):
     """
     from sklearn.model_selection import train_test_split
     
-    # Create sample files
-    benign_dir, malicious_dir = create_sample_files()
+    # If external directories provided, optionally generate samples if they don't exist
+    if benign_dir and malicious_dir:
+        if generate_if_missing and (not os.path.isdir(benign_dir) or not os.path.isdir(malicious_dir)):
+            print("Provided directories missing; generating synthetic samples.")
+            benign_dir, malicious_dir = create_sample_files()
+    else:
+        benign_dir, malicious_dir = create_sample_files()
     
     # Load dataset
     X, y = load_dataset(benign_dir, malicious_dir)

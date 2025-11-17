@@ -48,6 +48,44 @@ pip install -r requirements.txt
 python file_classifier.py
 ```
 
+## CLI Usage
+
+Train with synthetic samples (default):
+
+```bash
+python file_classifier.py
+```
+
+Use your own dataset directories:
+
+```bash
+python file_classifier.py --benign-dir path/to/benign --malicious-dir path/to/malicious
+```
+
+Scan arbitrary files after training (any mix of paths):
+
+```bash
+python file_classifier.py --scan suspicious.exe notes.txt image.png
+```
+
+Save a text metrics report:
+
+```bash
+python file_classifier.py --report metrics.txt
+```
+
+Prevent auto-generation if directories missing:
+
+```bash
+python file_classifier.py --benign-dir b_dir --malicious-dir m_dir --no-generate
+```
+
+Show plots interactively:
+
+```bash
+python file_classifier.py --show-plots
+```
+
 ## Project Structure
 
 ```text
@@ -97,6 +135,8 @@ ACCURACY: 0.8750  PRECISION: 0.8571  RECALL: 0.8571  F1: 0.8571
 ## Configuration Ideas (Future)
 
 Potential flags: `--sample-dir`, `--test-size`, `--no-visualize`.
+
+Current implemented flags: `--benign-dir`, `--malicious-dir`, `--test-size`, `--no-generate`, `--scan`, `--show-plots`, `--report`
 
 ## Contribution Guidelines
 

@@ -14,6 +14,7 @@ from sklearn.metrics import (
     f1_score, confusion_matrix, classification_report
 )
 from data_handler import prepare_data
+import argparse
 
 
 def train_classifier(X_train, y_train):
@@ -170,31 +171,82 @@ def visualize_results(metrics):
         plt.close()
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="File Type Classifier Using Hash Features")
+    parser.add_argument("--benign-dir", type=str, default=None, help="Path to directory of benign files")
+    parser.add_argument("--malicious-dir", type=str, default=None, help="Path to directory of malicious files")
+    parser.add_argument("--test-size", type=float, default=0.3, help="Test split proportion (default 0.3)")
+    parser.add_argument("--no-generate", action="store_true", help="Do not auto-generate synthetic samples if dirs missing")
+    parser.add_argument("--scan", nargs="*", help="One or more file paths to classify after training")
+    parser.add_argument("--show-plots", action="store_true", help="Show plots interactively")
+    parser.add_argument("--report", type=str, default=None, help="Optional path to save textual report")
+    return parser.parse_args()
+
+
+def classify_files(file_paths, model):
+    from hash_features import extract_hash_features
+    rows = []
+    for fp in file_paths:
+        if not os.path.isfile(fp):
+            print(f"[WARN] Skipping missing file: {fp}")
+            continue
+        feats = extract_hash_features(fp)
+        if not feats:
+            print(f"[WARN] No features extracted: {fp}")
+            continue
+        import pandas as pd
+        df = pd.DataFrame([feats]).fillna(0)
+        pred = model.predict(df)[0]
+        label = "Malicious" if pred == 1 else "Benign"
+        print(f"[SCAN] {fp} -> {label}")
+        rows.append({"file": fp, "prediction": label})
+    return rows
+
+
 def main():
-    """
-    Main function to run the file classifier
-    """
+    args = parse_args()
+
+    if args.show_plots:
+        os.environ["SHOW_PLOTS"] = "1"
+
     print("\n" + "="*70)
     print("FILE TYPE CLASSIFIER USING HASH FEATURES")
     print("="*70 + "\n")
-    
-    # Prepare data
+
     print("Preparing dataset...")
-    X_train, X_test, y_train, y_test = prepare_data()
+    X_train, X_test, y_train, y_test = prepare_data(
+        test_size=args.test_size,
+        benign_dir=args.benign_dir,
+        malicious_dir=args.malicious_dir,
+        generate_if_missing=not args.no_generate
+    )
     print(f"✓ Dataset prepared: {len(X_train)} training, {len(X_test)} testing samples\n")
-    
-    # Train classifier
+
     classifier = train_classifier(X_train, y_train)
-    
-    # Evaluate classifier
     metrics = evaluate_classifier(classifier, X_test, y_test)
-    
-    # Generate accuracy report
     generate_accuracy_report(metrics, X_train, X_test)
+
+    if args.scan:
+        print("\nInitiating scan of user-provided file(s)...")
+        scan_results = classify_files(args.scan, classifier)
+        if scan_results:
+            print("\nScan Summary:")
+            for r in scan_results:
+                print(f"  {r['file']}: {r['prediction']}")
     
-    print("\n✓ Classification complete!")
-    print("\nThe model successfully classifies files as benign or malicious")
-    print("based on MD5 hash-related metadata features.\n")
+    if args.report:
+        try:
+            with open(args.report, "w", encoding="utf-8") as f:
+                f.write("FILE TYPE CLASSIFIER REPORT\n")
+                f.write(f"Accuracy: {metrics['accuracy']:.4f}\n")
+                f.write(f"Precision: {metrics['precision']:.4f}\n")
+                f.write(f"Recall: {metrics['recall']:.4f}\n")
+                f.write(f"F1: {metrics['f1_score']:.4f}\n")
+            print(f"\n✓ Text report saved to {args.report}")
+        except Exception as e:
+            print(f"Failed to save report: {e}")
+
+    print("\n✓ Classification run complete.")
 
 
 if __name__ == "__main__":
