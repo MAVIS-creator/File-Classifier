@@ -3,6 +3,7 @@ File Type Classifier Using Hash Features
 Main module for training and evaluating Naive Bayes classifier
 """
 
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -159,9 +160,14 @@ def visualize_results(metrics):
                     ha='center', va='bottom', fontweight='bold')
     
     plt.tight_layout()
-    plt.savefig('classification_results.png', dpi=300, bbox_inches='tight')
-    print("\n✓ Visualization saved as 'classification_results.png'")
-    plt.show()
+    output_path = 'classification_results.png'
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    print(f"\n✓ Visualization saved as '{output_path}'")
+    # Only show plots if explicitly requested to avoid blocking CI/headless runs
+    if os.environ.get("SHOW_PLOTS", "0").lower() in {"1", "true", "yes"}:
+        plt.show()
+    else:
+        plt.close()
 
 
 def main():
