@@ -43,10 +43,41 @@ These are coarse, illustrative indicators only.
 
 ## Quick Start
 
+**GUI Mode (Recommended for Beginners):**
+
+```bash
+pip install -r requirements.txt
+python gui_classifier.py
+```
+
+**Command-Line Mode:**
+
 ```bash
 pip install -r requirements.txt
 python file_classifier.py
 ```
+
+## GUI Usage
+
+Launch the graphical interface for an easy-to-use experience:
+
+```bash
+python gui_classifier.py
+```
+
+The GUI provides:
+
+1. **Step 1: Train Model** - Click "Train Classifier" to build the model on sample data
+2. **Step 2: Select Files** - Browse and select any files you want to classify
+3. **Step 3: Classify** - Run classification and see results instantly
+4. **View Report** - Display the accuracy visualization with confusion matrix and metrics
+
+Features:
+
+- 📁 File browser to select files from anywhere
+- 🔍 Real-time classification results
+- 📊 Visual accuracy report viewer
+- 🎨 Clean, intuitive interface
 
 ## CLI Usage
 
