@@ -2,9 +2,8 @@
 
 Lightweight MD5 hash metadata based malware vs benign file classifier.
 
-![Classification Results (generated after first run)](classification_results.png)
+(/classification_results.png)
 
-> If the image is missing, run `python file_classifier.py` to generate `classification_results.png`.
 
 ---
 
